@@ -1,0 +1,6 @@
+consumer:
+    n_time: 3600
+    n_tries: 3
+general:
+    n_prod: 1
+    n_cons: 1

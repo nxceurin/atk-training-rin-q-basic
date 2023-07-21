@@ -1,0 +1,23 @@
+version: 1
+formatters:
+  simple:
+    format: '[%(asctime)s] {%(filename)s:%(lineno)s}  %(funcName)s - %(levelname)s - %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simple
+    stream: ext://sys.stdout
+  file_handler:
+    class: logging.FileHandler
+    filename: basic_error.log
+    level: ERROR  # Set the desired log level for the file handler
+    formatter: simple
+loggers:
+  sampleLogger:
+    level: DEBUG
+    handlers: [console]
+    propagate: no
+root:
+  level: DEBUG
+  handlers: [console]

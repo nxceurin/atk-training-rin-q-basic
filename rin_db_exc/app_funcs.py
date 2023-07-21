@@ -13,7 +13,7 @@ async def producer(cpath: str =  os.path.dirname(__file__)+"/config.yaml") -> No
     fpath: str = get_yaml(cpath).get('general', {"primary_path": os.getcwd()}).get('primary_path', os.getcwd())
     while True:
         prod = Producer(fpath)
-        print(prod())
+        prod()
         await asyncio.sleep(5)
 
 

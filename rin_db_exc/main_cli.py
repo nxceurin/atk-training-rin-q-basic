@@ -17,5 +17,5 @@ def consumer():
 
 
 @app.command()
-def web_app():
-    run_web_app()
+def web_app(path: str):
+    run_web_app(path)

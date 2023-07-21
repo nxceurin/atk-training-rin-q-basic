@@ -32,11 +32,11 @@ Wait times for Producers, Consumers and Cleaners are independent amongst themsel
 <h1 id="usage">Usage</h1>
 
 ```bash
-basic --help
+atk-training-rin-q-basic --help
 ```
 To run the web app, try
 ```bash
-basic web-app
+atk-training-rin-q-basic web-app
 ```
 The program will open in ```localhost:8000```. <i>producer</i> and <i>consumer</i> will be running in the background -- any logs/output produced (primarily by consumer) will be visible in the terminal. <br>
 <b>NOTE: All files produced will be in the CURRENT DIRECTORY BY DEFAULT. To set your custom path, modify the path in config.yaml.</b>

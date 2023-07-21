@@ -25,17 +25,18 @@ Also consists of class <b>PersistentQSQLite</b> that performs SQL queries on a d
 <br>
 On being called, <b>Producer</b> generates a file name (and file), and submits this file name as a job. <b>PersistentQSQLite</b> adds this name to a queue/SQL database. Occurs every <b>5</b> seconds<br>
 <b>Consumer</b> reads this queue and processes them, generating a new file with the processed content. Occurs every <b>7-15</b> seconds.<br>
-Wait time for Producers and Consumers is independent amongst themselves and each other.
+If after <i>n</i> tries a file is not able to be processed by <b>Consumer</b>, it gets renamed with a <i>.failed</i> extension. <b> Cleaner</b> checks for .failed files every <b>30</b> seconds and deletes them.<br>
+Wait times for Producers, Consumers and Cleaners are independent amongst themselves and each other.
 </p>
 <hr>
 <h1 id="usage">Usage</h1>
 
 ```bash
-atk-training-rin-q-basic --help
+basic --help
 ```
 To run the web app, try
 ```bash
-atk-training-rin-q-basic web-app
+basic web-app
 ```
 The program will open in ```localhost:8000```. <i>producer</i> and <i>consumer</i> will be running in the background -- any logs/output produced (primarily by consumer) will be visible in the terminal. <br>
 <b>NOTE: All files produced will be in the CURRENT DIRECTORY BY DEFAULT. To set your custom path, modify the path in config.yaml.</b>

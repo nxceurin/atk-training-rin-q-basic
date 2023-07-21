@@ -1,15 +1,17 @@
-import random
-import logging
 import asyncio
+import logging
 import os
+import random
+
 from rin_db_exc.PIQ import Producer, Consumer, Cleaner
 from rin_db_exc.log_error import get_yaml
 
 logger: logging.Logger = logging.getLogger(__name__)
-deleted_processes = []
+finished_processes = []
+discarded_processes = []
 
 
-async def producer(cpath: str =  os.path.dirname(__file__)+"/config.yaml") -> None:
+async def producer(cpath: str = os.path.dirname(__file__) + "/config.yaml") -> None:
     fpath: str = get_yaml(cpath).get('general', {"primary_path": os.getcwd()}).get('primary_path', os.getcwd())
     while True:
         prod = Producer(fpath)
@@ -26,15 +28,17 @@ async def consumer(cpath: str = os.path.dirname(__file__)+"/config.yaml", name: 
     while True:
         cons = Consumer(name, fpath)
         try:
-            job_name = cons.get_job_name()
+            job_name, id = cons.get_job_name()
         except TypeError:
             job_name = ""
         for _ in range(num_tries):
             try:
                 await asyncio.wait_for(cons(), timeout=time_out)
+                finished_processes.append({"id": id, "filename": job_name})
                 break
             except asyncio.TimeoutError:
                 logger.error(f"Job took more than {time_out} seconds. Skipping {job_name}...")
+                discarded_processes.append({"id": id, "filename": job_name})
                 break
             except Exception as e:
                 logger.error(e)
@@ -45,6 +49,7 @@ async def consumer(cpath: str = os.path.dirname(__file__)+"/config.yaml", name: 
                     pass
         else:
             logger.error(f"Job unable to be finished. Skipping {job_name}...")
+            discarded_processes.append({"id": id, "filename": job_name})
         try:
             cons.delete_entry()
         except TypeError:

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "rin-db-exc"
+name = "atk-training-rin-q-basic"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
@@ -13,8 +13,7 @@ typer = "^0.9.0"
 uvicorn = "^0.23.1"
 pyyaml = "^6.0.1"
 
-[tool.poetry.scripts]ain_cli:app"
-
+[tool.poetry.scripts]
 atk-training-rin-q-basic = "rin_db_exc.main_cli:app"
 
 [build-system]

@@ -1,7 +1,10 @@
+import asyncio
+import os
+
 from typer import Typer
+
 import rin_db_exc.app_funcs as afunc
 from rin_db_exc.app import run_web_app
-import asyncio
 
 app = Typer()
 
@@ -17,5 +20,5 @@ def consumer():
 
 
 @app.command()
-def web_app(path: str):
+def web_app(path: str = os.path.dirname(__file__) + "/config.yaml"):
     run_web_app(path)

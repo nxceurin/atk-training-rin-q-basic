@@ -1,28 +1,22 @@
-import random
-import string
-import sqlite3
 import logging
 import os
+import random
+import sqlite3
+import string
 from abc import ABC, abstractmethod
 from datetime import datetime as dt
+from typing import List
+
 from rin_db_exc.process_tasks import stair_case, coalesce_spaces, append_date
 
 logger: logging.Logger = logging.getLogger(__name__)
-
-
-class PersistentQInterface(ABC):
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def __call__(self, *args, **kwargs):
-        pass
 
 
 class PersistentQSQLite:
     def __init__(self):
         self.db_name = "basic"
         self.conn = sqlite3.connect(self.db_name)
+        self.conn.row_factory = sqlite3.Row
         self.create_queue_table()
 
     def create_queue_table(self):
@@ -46,8 +40,22 @@ class PersistentQSQLite:
         self.conn.execute('DELETE FROM queue WHERE id = ?', (file_id,))
         self.conn.commit()
 
+    def get_jobs(self) -> List:
+        cursor = self.conn.execute('SELECT id, filename FROM queue')
+        row = cursor.fetchall()
+        return row
+
     def close(self):
         self.conn.close()
+
+
+class PersistentQInterface(ABC):
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def __call__(self, *args, **kwargs):
+        pass
 
 
 class Producer(PersistentQInterface):
@@ -96,7 +104,7 @@ class Consumer(PersistentQInterface):
 
     def get_job_name(self):
         if self.db.get_next_file_from_queue():
-            return self.db.get_next_file_from_queue()[0]
+            return self.db.get_next_file_from_queue()
 
 
 class Cleaner(PersistentQInterface):

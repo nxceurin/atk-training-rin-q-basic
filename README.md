@@ -7,26 +7,29 @@ Click <a href="#usage">here</a> for usage/commands.
 <h1>Solution</h1>
 Here, let the job be a string of length 10.<br>
 
-Using async and await, functions can be turned into coroutines to be passed to a ```execute_function``` command.
+Processes are handled/run simultaneously using ```pm2```.
 
 ```mermaid
 graph TD;
-    A["PersistentQInterface"]-- child class ---B["Producer(s)"];
-    A-- child class ---C["Consumer(s)"]
-    B-- submit jobs -->D["PersistentQSQlite"]
-    D-- process jobs -->C
+    B["Producer"]-- submit jobs -->D["PersistentQSQlite"]
+    D-- process jobs -->C["Consumer"]
+    E["Manager"]-- updates status -->D
+    F["Cleaner"]-- cleans failed jobs -->G["System"]
+    B-- adds to -->G
+    C-- adds to -->G
 ```
 
 
 <h3>System</h3>
 <p>
-Consists of abstract class (<a href="https://docs.python.org/3/library/abc.html">ABC</a>) <b>PersistentQInterface</b>, children <b>Producer</b>, <b>Consumer</b> and <b>Cleaner</b>.<br>
+Consists of abstract class (<a href="https://docs.python.org/3/library/abc.html">ABC</a>) <b>PersistentQInterface</b>, children <b>Producer</b>, <b>Consumer</b>, <b>Cleaner</b> and <b>Manager</b>.<br>
 Also consists of class <b>PersistentQSQLite</b> that performs SQL queries on a database from Python.<br>
 <br>
 On being called, <b>Producer</b> generates a file name (and file), and submits this file name as a job. <b>PersistentQSQLite</b> adds this name to a queue/SQL database. Occurs every <b>5</b> seconds<br>
 <b>Consumer</b> reads this queue and processes them, generating a new file with the processed content. Occurs every <b>7-15</b> seconds.<br>
 If after <i>n</i> tries a file is not able to be processed by <b>Consumer</b>, it gets renamed with a <i>.failed</i> extension. <b> Cleaner</b> checks for .failed files every <b>30</b> seconds and deletes them.<br>
-Wait times for Producers, Consumers and Cleaners are independent amongst themselves and each other.
+<b>Manager</b> retrieves filenames with the status "processing" and the time passed since status application. If a file has been processing for more than <b>60</b> seconds, <b>Manager</b> will reassign it "unprocessed" status so it can be picked up by other Consumers.<br>
+Wait times for Producers, Consumers, Cleaners and Managers are independent amongst themselves and each other.
 </p>
 <hr>
 <h1 id="usage">Usage</h1>

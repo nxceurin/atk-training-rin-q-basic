@@ -2,10 +2,11 @@ import logging
 import os
 import random
 import signal
+import subprocess
 import sys
 from time import sleep
 
-from rin_db_exc.PIQ import Consumer
+from rin_db_exc.classes.Consumer import Consumer
 from rin_db_exc.log_error import get_yaml
 
 
@@ -41,15 +42,20 @@ if __name__ == "__main__":
     num_tries = conf_dict.get('consumer', {'n_tries': 3}).get('n_tries', 3)
 
     while True:
-        cons = Consumer(cpath=fpath, name="consumer")
-        try:
-            job_name, job_id = cons.get_job_name()
-        except TypeError:
-            print("Queue empty. Waiting 20s...")
-            job_name = ""
-            sleep(20)
-            break
-        for _ in range(num_tries):
+        cons = Consumer(cpath=fpath, name=cpath[1])
+        for _ in range(3):  # if queue is empty for 60seconds, stop itself
+            try:
+                job_name, job_id = cons.get_job_name()
+                break
+            except TypeError:
+                print("Queue empty. Waiting 20s...")
+                job_name = ""
+                sleep(20)
+                continue
+        else:  # executes if for loop hasn't been broken -> queue is empty over 60s
+            subprocess.run(f"pm2 stop {cpath[1]}", shell=True, check=True)
+
+        for _ in range(num_tries):  # no. tries job can fail before discarding
             try:
                 signal.alarm(time_out)
                 cons()
@@ -58,20 +64,26 @@ if __name__ == "__main__":
                 break
             except TimeoutException:
                 logger.error(f"Job took more than {time_out} seconds. Skipping {job_name}...")
+                try:
+                    os.rename(job_name, job_name + ".failed")  # add .failed to skipped jobs so cleaner can handle it
+                except Exception:
+                    pass
                 discarded_processes.append({"id": job_id, "filename": job_name})
                 break
             except Exception as e:
                 logger.error(e)
                 logger.warning(f"Encountered error while processing job. Trying again...\n")
-                try:
-                    os.rename(job_name, job_name + ".failed")
-                except Exception:
-                    pass
+
         else:
             logger.error(f"Job unable to be finished. Skipping {job_name}...")
+            try:
+                os.rename(job_name, job_name + ".failed")
+            except Exception:
+                pass
             discarded_processes.append({"id": id, "filename": job_name})
         try:
             cons.delete_entry()
         except TypeError:
             logger.info("Empty queue")
+            sleep(20)
         sleep(random.randint(7, 15))

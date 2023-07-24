@@ -7,21 +7,11 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
 from rin_db_exc.PIQ import PersistentQSQLite as psql
-# from rin_db_exc.consumer_pm2 import get_processes
 from rin_db_exc.log_error import get_yaml
 
 app = FastAPI()
 config_path: str = os.path.dirname(__file__) + "/config.yaml"
 
-
-# @app.get("/")
-# async def execute_functions():
-#     conf = get_yaml(config_path)
-#     for _ in range(conf.get('general', {'n_prod': 1}).get('n_prod', 1)):
-#         asyncio.create_task(producer(config_path))
-#     for i in range(conf.get('general', {'n_cons': 1}).get('n_cons', 1)):
-#         asyncio.create_task(consumer(config_path, f"Consumer{i + 1}"))
-#     asyncio.create_task(cleaner(config_path))
 
 @app.get("/", response_class=HTMLResponse)
 async def get_form():
@@ -40,6 +30,10 @@ async def get_form():
             <input type="text" id="c_name" name="c_name">
             <button type="submit" name="action" value="add_cons">Start Consumer</button>
             <button type="submit" name="action" value="del_cons">Create Consumer</button>
+            <br><br>
+
+            <button type="submit" name="action" value="manager">Start Manager</button>
+            <button type="submit" name="action" value="cleaner">Start Cleaner</button>
         </form>
         """
 
@@ -47,15 +41,16 @@ async def get_form():
 @app.post("/")
 async def execute_command(conf_path: str = fastapi.Form(...), action: str = fastapi.Form(...),
                           p_name: str = fastapi.Form(...), c_name: str = fastapi.Form(...)):
-    if action == "add_prod":
-        command = f"pm2 start producer_pm2.py --name {p_name} -- {conf_path}"
-    elif action == "add_cons":
-        command = f"pm2 start consumer_pm2.py --name {c_name} -- {conf_path}"
-    elif action == "del_prod":
-        command = f"pm2 stop {p_name}"
-    elif action == "del_cons":
-        command = f"pm2 stop {c_name}"
-    else:
+    map_button = {
+        "add_prod": f"pm2 start producer_pm2.py --name {p_name} -- {conf_path}",
+        "add_cons": f"pm2 start consumer_pm2.py --name {c_name} -- {conf_path}",
+        "del_prod": f"pm2 stop {p_name}",
+        "del_cons": f"pm2 stop {c_name}",
+        "manager": f"pm2 start manager_pm2.py -- {conf_path}",
+        "cleaner": f"pm2 stop cleaner_pm2.py -- {conf_path}"
+    }
+    command = map_button.get(action, "invalid")
+    if command == "invalid":
         return "Invalid action!"
 
     try:
@@ -70,20 +65,11 @@ async def show_table():
     path = get_yaml(config_path).get('general', {"primary_path": os.getcwd()}).get('primary_path', os.getcwd())
     queue = psql(path).get_jobs()
     print("all good so far")
-    return {"pending jobs": queue,
-            # "completed jobs": get_processes()[0],
-            # "discarded jobs": get_processes()[1]
+    return {"pending jobs": queue
             }
 
 
-def run_web_app(path: str):
-    """
-    hi?
-    :param path:
-    :return:
-    """
-    global config_path
-    config_path = path
+def run_web_app():
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 

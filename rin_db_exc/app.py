@@ -1,7 +1,10 @@
 import os
+import subprocess
 
+import fastapi
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 from rin_db_exc.PIQ import PersistentQSQLite as psql
 # from rin_db_exc.consumer_pm2 import get_processes
@@ -20,8 +23,45 @@ config_path: str = os.path.dirname(__file__) + "/config.yaml"
 #         asyncio.create_task(consumer(config_path, f"Consumer{i + 1}"))
 #     asyncio.create_task(cleaner(config_path))
 
+@app.get("/", response_class=HTMLResponse)
+async def get_form():
+    return """
+        <form method="post">
+            <label for="config_path">Config Path:</label><br>
+            <input type="text" id="conf_path" name="conf_path" required><br><br>
+            
+            <label for="config_path">Process name</label><br>
+            <input type="text" id="name" name="name" required>
+            <input t<button type="submit" name="action" value="add_prod">Create Producer</button>
+            <input t<button type="submit" name="action" value="del_prod">Stop Producer</button>
+            
+            <label for="config_path">Consumer name</label><br>
+            <input type="text" id="name" name="name" required>
+            <button type="submit" name="action" value="add_cons">Start Consumer</button>
+            <button type="submit" name="action" value="del_cons">Create Consumer</button>
+        </form>
+        """
 
-@app.get("/")
+
+@app.post("/")
+async def execute_command(conf_path: str = fastapi.Form(...), action: str = fastapi.Form(...),
+                          name: str = fastapi.Form(...)):
+    if action == "add_prod":
+        command = f"pm2 start producer_pm2.py -name {name} -- {conf_path}"
+    elif action == "add_prod":
+        command = f"pm2 start consumer_pm2. -name {name} -- {conf_path}"
+    elif action in ["del_prod", "del_cons"]:
+        command = f"pm2 stop {name}"
+    else:
+        return "Invalid action!"
+
+    try:
+        subprocess.run(command, shell=True, check=True)
+        return f"Command executed successfully: {command}"
+    except subprocess.CalledProcessError as e:
+        return f"Command execution failed: {command}, Error: {e}"
+
+
 async def show_table():
     global config_path
     path = get_yaml(config_path).get('general', {"primary_path": os.getcwd()}).get('primary_path', os.getcwd())

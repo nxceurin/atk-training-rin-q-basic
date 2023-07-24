@@ -34,12 +34,15 @@ Wait times for Producers, Consumers and Cleaners are independent amongst themsel
 ```bash
 atk-training-rin-q-basic --help
 ```
-To run the web app, try
-```bash
-atk-training-rin-q-basic web-app
-```
-The program will open in ```localhost:8000```. <i>producer</i> and <i>consumer</i> will be running in the background -- any logs/output produced (primarily by consumer) will be visible in the terminal. <br>
-<b>NOTE: All files produced will be in the CURRENT DIRECTORY BY DEFAULT. To set your custom path, modify the path in config.yaml.</b>
+
+The program will open in ```localhost:8000```. From there, provide the path to config file (<b>absolute path</b>),
+producer name and consumer name. Note that these fields CANNOT be empty, even if unused.<br><br>
+
+Click on the appropriate buttons to start/end producers/consumers with the provided names.
+<i>producer</i> and <i>consumer</i> will be running in the background -- any logs/output produced (primarily by
+consumer) will be visible in the terminal. <br>
+<b>NOTE: All files produced will be in the CURRENT DIRECTORY BY DEFAULT. To set your custom path, modify primary_path in
+config.yaml.</b>
 
 <h3> Setting up your own config</h3>
 Parameters can be customised by giving the command path to a config.yaml file.<br>
@@ -51,11 +54,7 @@ consumer:
     n_tries: 3
 general:
     primary_path: current/directory
-    n_prod: 1
-    n_cons: 1
 ```
 ```n_time``` : Seconds a consumer is allowed to spend on one job before skipping
 ```n_tries``` : Number of time a consumer is allowed to try a job (in case of errors) before skipping
 ```primary_path```: Path where files are created
-```n_prod``` : Number of producers
-```n_cons``` : Number of consumers

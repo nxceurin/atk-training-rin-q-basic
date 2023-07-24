@@ -30,13 +30,14 @@ async def get_form():
             <label for="config_path">Config Path:</label><br>
             <input type="text" id="conf_path" name="conf_path" required><br><br>
             
-            <label for="config_path">Process name</label><br>
-            <input type="text" id="name" name="name" required>
-            <input t<button type="submit" name="action" value="add_prod">Create Producer</button>
-            <input t<button type="submit" name="action" value="del_prod">Stop Producer</button>
+            <label for="p_name">Process name</label><br>
+            <input type="text" id="p_name" name="p_name">
+            <button type="submit" name="action" value="add_prod">Create Producer</button>
+            <button type="submit" name="action" value="del_prod">Stop Producer</button>
+            <br><br>
             
-            <label for="config_path">Consumer name</label><br>
-            <input type="text" id="name" name="name" required>
+            <label for="c_name">Consumer name</label><br>
+            <input type="text" id="c_name" name="c_name">
             <button type="submit" name="action" value="add_cons">Start Consumer</button>
             <button type="submit" name="action" value="del_cons">Create Consumer</button>
         </form>
@@ -45,13 +46,15 @@ async def get_form():
 
 @app.post("/")
 async def execute_command(conf_path: str = fastapi.Form(...), action: str = fastapi.Form(...),
-                          name: str = fastapi.Form(...)):
+                          p_name: str = fastapi.Form(...), c_name: str = fastapi.Form(...)):
     if action == "add_prod":
-        command = f"pm2 start producer_pm2.py -name {name} -- {conf_path}"
-    elif action == "add_prod":
-        command = f"pm2 start consumer_pm2. -name {name} -- {conf_path}"
-    elif action in ["del_prod", "del_cons"]:
-        command = f"pm2 stop {name}"
+        command = f"pm2 start producer_pm2.py --name {p_name} -- {conf_path}"
+    elif action == "add_cons":
+        command = f"pm2 start consumer_pm2.py --name {c_name} -- {conf_path}"
+    elif action == "del_prod":
+        command = f"pm2 stop {p_name}"
+    elif action == "del_cons":
+        command = f"pm2 stop {c_name}"
     else:
         return "Invalid action!"
 

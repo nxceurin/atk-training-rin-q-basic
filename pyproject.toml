@@ -2,7 +2,7 @@
 name = "atk-training-rin-q-basic"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Harine <haariinee@gmail.com>"]
 readme = "README.md"
 packages = [{include = "rin_db_exc"}]
 

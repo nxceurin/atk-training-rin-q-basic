@@ -45,8 +45,9 @@ if __name__ == "__main__":
         try:
             job_name, job_id = cons.get_job_name()
         except TypeError:
-            print("Queue empty. Exiting...")
+            print("Queue empty. Waiting 20s...")
             job_name = ""
+            sleep(20)
             break
         for _ in range(num_tries):
             try:

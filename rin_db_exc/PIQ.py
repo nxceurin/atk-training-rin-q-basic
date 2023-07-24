@@ -20,7 +20,8 @@ class PersistentQSQLite:
         self.create_queue_table()
 
     def create_queue_table(self):
-        self.conn.execute('''CREATE TABLE IF NOT EXISTS queue (id INTEGER PRIMARY KEY, filename TEXT NOT NULL)''')
+        self.conn.execute('''CREATE TABLE IF NOT EXISTS queue (id INTEGER PRIMARY KEY, filename TEXT NOT NULL, 
+        state TEXT)''')
         self.conn.commit()
 
     def add_file_to_queue(self, filename):
@@ -28,7 +29,7 @@ class PersistentQSQLite:
         self.conn.commit()
 
     def get_next_file_from_queue(self):
-        cursor = self.conn.execute('SELECT id, filename FROM queue LIMIT 1')
+        cursor = self.conn.execute('SELECT id, filename, state FROM queue WHERE state = "" LIMIT 1')
         row = cursor.fetchone()
         if row:
             file_id, filename = row

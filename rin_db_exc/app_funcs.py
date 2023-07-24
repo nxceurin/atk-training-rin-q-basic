@@ -28,13 +28,13 @@ async def consumer(cpath: str = os.path.dirname(__file__)+"/config.yaml", name: 
     while True:
         cons = Consumer(name, fpath)
         try:
-            job_name, id = cons.get_job_name()
+            job_name, job_id = cons.get_job_name()
         except TypeError:
             job_name = ""
         for _ in range(num_tries):
             try:
                 await asyncio.wait_for(cons(), timeout=time_out)
-                finished_processes.append({"id": id, "filename": job_name})
+                finished_processes.append({"id": job_id, "filename": job_name})
                 break
             except asyncio.TimeoutError:
                 logger.error(f"Job took more than {time_out} seconds. Skipping {job_name}...")

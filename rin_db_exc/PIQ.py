@@ -13,9 +13,9 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 class PersistentQSQLite:
-    def __init__(self):
+    def __init__(self, path):
         self.db_name = "basic"
-        self.conn = sqlite3.connect(self.db_name)
+        self.conn = sqlite3.connect(f"{path}/{self.db_name}.db")
         self.conn.row_factory = sqlite3.Row
         self.create_queue_table()
 
@@ -61,8 +61,8 @@ class PersistentQInterface(ABC):
 class Producer(PersistentQInterface):
     def __init__(self, cpath: str):
         super().__init__()
-        self.db = PersistentQSQLite()
         self.config = cpath
+        self.db = PersistentQSQLite(cpath)
 
     def __call__(self, *args, **kwargs):
         fname = ''.join(random.choice(string.ascii_lowercase) for _ in range(10))
@@ -77,11 +77,11 @@ class Producer(PersistentQInterface):
 class Consumer(PersistentQInterface):
     def __init__(self, name: str, cpath: str):
         super().__init__()
-        self.db = PersistentQSQLite()
         self.name = name
         self.config = cpath
+        self.db = PersistentQSQLite(cpath)
 
-    async def __call__(self):
+    def __call__(self):
         curr_job, _ = self.db.get_next_file_from_queue()
         if not curr_job:
             print("Queue empty. Exiting...")

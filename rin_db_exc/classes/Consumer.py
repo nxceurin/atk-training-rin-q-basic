@@ -24,9 +24,9 @@ class Consumer(PersistentQInterface):
                     return
                 break
             except sqlite3.OperationalError:
+                print("Database locked. Trying again in 10s.")
                 sleep(10)
                 continue
-
         else:
             print("Database locked for over 60s. Skipping...")
             return

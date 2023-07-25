@@ -56,7 +56,7 @@ async def execute_command(conf_path: str = fastapi.Form(...), action: str = fast
         "del_prod": f"pm2 stop {p_name}",
         "del_cons": f"pm2 stop {c_name}",
         "yes_man": f"pm2 start {script_path}/scripts/manager_pm2.py -- {conf_path}",
-        "yes_cln": f"pm2 stop {script_path}/scripts/cleaner_pm2.py -- {conf_path}",
+        "yes_cln": f"pm2 start {script_path}/scripts/cleaner_pm2.py -- {conf_path}",
         "no_man": f"pm2 stop {script_path}/scripts/manager_pm2.py",
         "no_cln": f"pm2 stop {script_path}/scripts/cleaner_pm2.py"
     }

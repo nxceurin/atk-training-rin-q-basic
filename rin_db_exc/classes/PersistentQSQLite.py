@@ -33,7 +33,7 @@ class PersistentQSQLite:
 
     def get_next_file_from_queue(self) -> Union[None, Tuple[str, int]]:
         """
-
+        get the top-most file from the queue with the status unprocessed and sets it to "processing"
         """
         self.conn.execute("BEGIN IMMEDIATE")
         cursor = self.conn.execute('SELECT id, filename, state FROM queue WHERE state = "unprocessed" LIMIT 1')
@@ -47,24 +47,37 @@ class PersistentQSQLite:
         self.conn.commit()
         return None
 
-    def delete_entry(self):
-        _, file_id = self.get_next_file_from_queue()
+    def delete_entry(self, job_id: int):
         self.conn.execute("BEGIN IMMEDIATE")
-        self.conn.execute('DELETE FROM queue WHERE id = ?', (file_id,))
+        self.conn.execute('DELETE FROM queue WHERE id = ?', (job_id,))
         self.conn.commit()
 
     def get_jobs(self) -> List:
-        cursor = self.conn.execute('SELECT id, filename FROM queue')
+        cursor = self.conn.execute('SELECT id, filename, state FROM queue')
         row = cursor.fetchall()
         return row
 
     def update_status(self):
-        self.conn.commit("BEGIN IMMEDIATE")
         processing_files = self.conn.execute("SELECT ROWID, * FROM queue WHERE state='processing'").fetchall()
         for row in processing_files:
-            job_time = row["proc_time"]  # Assuming you have a state_time column in your table
+            job_time = row["proc_time"]
             job_time = dt.strptime(job_time, "%Y-%m-%d %H:%M:%S.%f")
+
             if (dt.now() - job_time).total_seconds() >= 60:
+                self.conn.execute("BEGIN IMMEDIATE")
                 self.conn.execute("UPDATE queue SET state='unprocessed' WHERE id=?", (row["id"],))
                 print(f'Set {row["filename"]} to unprocessed')
                 self.conn.commit()
+
+    def set_invalid(self, job_id: int):
+        self.conn.execute("BEGIN IMMEDIATE")
+        self.conn.execute("UPDATE queue SET state='invalid' WHERE id= ?", (job_id,))
+        self.conn.commit()
+
+    def get_job_details(self):
+        cursor = self.conn.execute('SELECT id, filename, state FROM queue WHERE state = "unprocessed" LIMIT 1')
+        row = cursor.fetchone()
+        if row:
+            file_id, filename, _ = row
+            return filename, file_id
+        return None

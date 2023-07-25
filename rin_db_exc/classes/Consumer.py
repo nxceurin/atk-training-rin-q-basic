@@ -16,7 +16,7 @@ class Consumer(PersistentQInterface):
         self.db = PersistentQSQLite(cpath)
 
     def __call__(self):
-        for _ in range(6):
+        for _ in range(5):
             try:
                 curr_job, _ = self.db.get_next_file_from_queue()
                 if not curr_job:
@@ -24,11 +24,11 @@ class Consumer(PersistentQInterface):
                     return
                 break
             except sqlite3.OperationalError:
-                print("Database locked. Trying again in 10s.")
-                sleep(10)
+                print("Database locked. Trying again in 2s.")
+                sleep(2)
                 continue
         else:
-            print("Database locked for over 60s. Skipping...")
+            print("Database locked for over 10s. Skipping...")
             return
 
         file_path = os.path.join(self.config, curr_job)

@@ -57,18 +57,6 @@ class PersistentQSQLite:
         row = cursor.fetchall()
         return row
 
-    def update_status(self):
-        processing_files = self.conn.execute("SELECT ROWID, * FROM queue WHERE state='processing'").fetchall()
-        for row in processing_files:
-            job_time = row["proc_time"]
-            job_time = dt.strptime(job_time, "%Y-%m-%d %H:%M:%S.%f")
-
-            if (dt.now() - job_time).total_seconds() >= 60:
-                self.conn.execute("BEGIN IMMEDIATE")
-                self.conn.execute("UPDATE queue SET state='unprocessed' WHERE id=?", (row["id"],))
-                print(f'Set {row["filename"]} to unprocessed')
-                self.conn.commit()
-
     def set_invalid(self, job_id: int):
         self.conn.execute("BEGIN IMMEDIATE")
         self.conn.execute("UPDATE queue SET state='invalid' WHERE id= ?", (job_id,))
@@ -81,3 +69,6 @@ class PersistentQSQLite:
             file_id, filename, _ = row
             return filename, file_id
         return None
+
+    def get_state(self, state: str):
+        return self.conn.execute('SELECT id, filename, state FROM queue WHERE state = ?', (state,)).fetchall()

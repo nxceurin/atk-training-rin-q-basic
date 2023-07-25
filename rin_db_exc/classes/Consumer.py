@@ -65,3 +65,8 @@ class Consumer(PersistentQInterface):
 
     def set_invalid(self, job_id: int):
         self.db.set_invalid(job_id)
+
+    def set_completed(self, job_id: int):
+        self.db.conn.execute("BEGIN IMMEDIATE")
+        self.db.conn.execute("UPDATE queue SET state='processed' WHERE id= ? AND state='processing'", (job_id,))
+        self.db.conn.commit()

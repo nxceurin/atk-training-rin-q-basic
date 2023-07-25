@@ -3,11 +3,17 @@ import subprocess
 
 import fastapi
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
-app = FastAPI()
+from rin_db_exc.classes.PersistentQSQLite import PersistentQSQLite as psql
+from rin_db_exc.log_error import get_yaml
+
 config_path: str = os.path.dirname(__file__) + "/config.yaml"
+script_path = os.path.dirname(os.path.realpath(__file__))
+app = FastAPI()
+templates = Jinja2Templates(directory=script_path + "/templates")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -49,8 +55,9 @@ async def execute_command(conf_path: str = fastapi.Form(...), action: str = fast
         Input is received from the submitted form and returns a string.
         """
     global config_path
+    global script_path
     config_path = conf_path
-    script_path = os.path.dirname(os.path.realpath(__file__))
+
     map_button = {
         "add_prod": f"pm2 start {script_path}/scripts/producer_pm2.py --name {p_name} -- {conf_path} {p_name}",
         "add_cons": f"pm2 start {script_path}/scripts/consumer_pm2.py --name {c_name} -- {conf_path} {c_name}",
@@ -72,10 +79,21 @@ async def execute_command(conf_path: str = fastapi.Form(...), action: str = fast
         return f"Command execution failed: {command}, Error: {e}"
 
 
-# @app.get("/tables")
-# async def show_tables():
-#     queue = psql(config_path)
-#
+@app.get("/tables", response_class=HTMLResponse)
+async def show_tables(request: Request):
+    global config_path
+    path = get_yaml(config_path).get('general', {"primary_path": os.getcwd()}).get('primary_path', os.getcwd())
+    queue = psql(path)
+    unprocessed = queue.get_state("unprocessed")
+    invalid = queue.get_state("invalid")
+    finished = queue.get_state("processed")
+
+    return templates.TemplateResponse("tables.html", {
+        "request": request,
+        "unprocessed_jobs": unprocessed,
+        "finished_jobs": finished,
+        "invalid_jobs": invalid,
+    })
 
 
 def run_web_app():

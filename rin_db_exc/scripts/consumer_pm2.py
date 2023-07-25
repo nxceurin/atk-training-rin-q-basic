@@ -22,15 +22,7 @@ def timeout_handler(signum, frame):
     raise TimeoutException("Function execution timed out.")
 
 
-finished_processes = []
-discarded_processes = []
-
-
-def get_processes():
-    return finished_processes, discarded_processes
-
-
-if __name__ == "__main__":
+def consume():
     logger: logging.Logger = logging.getLogger(__name__)
     signal.signal(signal.SIGALRM, timeout_handler)
 
@@ -62,17 +54,17 @@ if __name__ == "__main__":
             signal.alarm(time_out)
             cons()
             signal.alarm(0)
-            finished_processes.append({"id": job_id, "filename": job_name})
         except TimeoutException:
             logger.error(f"Job took too long. Skipping {job_name}...")
             try:
                 cons.set_invalid(job_id)
+                break
             except Exception:
                 pass
 
-        while True:  # keep trying till processed job is deleted from queue
+        while True:  # keep trying till processed job is marked completed
             try:
-                cons.delete_entry(job_id)
+                cons.set_completed(job_id)
                 break
             except sqlite3.OperationalError:
                 print("Lock detected. Trying till lock is removed...")
@@ -80,3 +72,7 @@ if __name__ == "__main__":
             except Exception:
                 sleep(5)
         sleep(random.randint(7, 15))
+
+
+if __name__ == "__main__":
+    consume()

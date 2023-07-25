@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import signal
+import sqlite3
 import subprocess
 import sys
 from time import sleep
@@ -66,24 +67,28 @@ if __name__ == "__main__":
                 logger.error(f"Job took more than {time_out} seconds. Skipping {job_name}...")
                 try:
                     os.rename(job_name, job_name + ".failed")  # add .failed to skipped jobs so cleaner can handle it
+                    discarded_processes.append({"id": job_id, "filename": job_name})
                 except Exception:
                     pass
-                discarded_processes.append({"id": job_id, "filename": job_name})
                 break
             except Exception as e:
                 logger.error(e)
                 logger.warning(f"Encountered error while processing job. Trying again...\n")
 
-        else:
-            logger.error(f"Job unable to be finished. Skipping {job_name}...")
+        else:  # triggers when all tries are exhausted
+            logger.error(f"Job unable to be finished after {num_tries}. Skipping {job_name}...")
             try:
                 os.rename(job_name, job_name + ".failed")
             except Exception:
                 pass
             discarded_processes.append({"id": id, "filename": job_name})
-        try:
-            cons.delete_entry()
-        except TypeError:
-            logger.info("Empty queue")
-            sleep(20)
+        while True:
+            try:
+                cons.delete_entry()
+                break
+            except sqlite3.OperationalError:
+                print("Lock detected. Trying till lock is removed...")
+            except TypeError:
+                logger.info("Empty queue")
+                sleep(20)
         sleep(random.randint(7, 15))

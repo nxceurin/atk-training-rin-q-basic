@@ -1,5 +1,7 @@
 import os
+import sqlite3
 from datetime import datetime as dt
+from time import sleep
 
 from rin_db_exc.classes.PIQ import PersistentQInterface
 from rin_db_exc.classes.PersistentQSQLite import PersistentQSQLite
@@ -14,9 +16,19 @@ class Consumer(PersistentQInterface):
         self.db = PersistentQSQLite(cpath)
 
     def __call__(self):
-        curr_job, _ = self.db.get_next_file_from_queue()
-        if not curr_job:
-            print("Queue empty. Exiting...")
+        for _ in range(6):
+            try:
+                curr_job, _ = self.db.get_next_file_from_queue()
+                if not curr_job:
+                    print("Queue empty. Exiting...")
+                    return
+                break
+            except sqlite3.OperationalError:
+                sleep(10)
+                continue
+
+        else:
+            print("Database locked for over 60s. Skipping...")
             return
 
         file_path = os.path.join(self.config, curr_job)

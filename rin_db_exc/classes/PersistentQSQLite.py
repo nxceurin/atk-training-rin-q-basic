@@ -37,13 +37,8 @@ class PersistentQSQLite:
         """
         cursor = self.conn.execute('SELECT id, filename, state FROM queue WHERE state = "unprocessed" LIMIT 1')
         row = cursor.fetchone()
-        for _ in range(5):
-            try:
-                self.conn.execute("UPDATE queue SET state='processing', proc_time=? WHERE ROWID=?",
-                                  (str(dt.now()), row["id"],))
-                break
-            except sqlite3.OperationalError:
-                continue
+        self.conn.execute("UPDATE queue SET state='processing', proc_time=? WHERE ROWID=?",
+                          (str(dt.now()), row["id"],))
         if row:
             file_id, filename, _ = row
             return filename, file_id

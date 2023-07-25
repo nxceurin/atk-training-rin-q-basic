@@ -15,7 +15,6 @@ async def get_form():
     """
     Generates the HTML-basedd form where user can enter configuration file path, producer and consumer names, and have
     the option to start/end producer, consumer, manager and cleaner.
-    :return:
     """
     return """
         <form method="post">
@@ -49,6 +48,8 @@ async def execute_command(conf_path: str = fastapi.Form(...), action: str = fast
         Function responsible for executing pm2 commands.
         Input is received from the submitted form and returns a string.
         """
+    global config_path
+    config_path = conf_path
     script_path = os.path.dirname(os.path.realpath(__file__))
     map_button = {
         "add_prod": f"pm2 start {script_path}/scripts/producer_pm2.py --name {p_name} -- {conf_path} {p_name}",
@@ -71,13 +72,10 @@ async def execute_command(conf_path: str = fastapi.Form(...), action: str = fast
         return f"Command execution failed: {command}, Error: {e}"
 
 
-# async def show_table():
-#     global config_path
-#     path = get_yaml(config_path).get('general', {"primary_path": os.getcwd()}).get('primary_path', os.getcwd())
-#     queue = psql(path).get_jobs()
-#     print("all good so far")
-#     return {"pending jobs": queue
-#             }
+# @app.get("/tables")
+# async def show_tables():
+#     queue = psql(config_path)
+#
 
 
 def run_web_app():

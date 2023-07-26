@@ -38,7 +38,7 @@ def consume():
         cons = Consumer(cpath=fpath, name=cpath[1], tries=num_tries)
         for _ in range(3):  # if queue is empty for 60seconds, stop itself
             try:
-                job_name, job_id = cons.get_job_name()
+                job_name, job_id = cons.get_job_name()  # redundant ??
                 break
             except TypeError:
                 print("Queue empty. Waiting 20s...")

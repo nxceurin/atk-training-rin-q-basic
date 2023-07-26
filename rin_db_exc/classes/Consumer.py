@@ -19,10 +19,11 @@ class Consumer(PersistentQInterface):
     def __call__(self):
         for _ in range(5):
             try:
-                curr_job, job_id = self.db.get_next_file_from_queue()
-                if not curr_job:
-                    print("Queue empty. Exiting...")
-                    return
+                curr_job, job_id = self.db.get_job_details()
+                # if not curr_job:
+                #     print("Queue empty. Exiting...")
+                #     return
+                self.db.set_state(job_id, "processing", "unprocessed")
                 break
             except sqlite3.OperationalError:
                 print("Database locked. Trying again in 2s.")
@@ -41,12 +42,11 @@ class Consumer(PersistentQInterface):
                 content = coalesce_spaces(content)
                 content = stair_case(content)
                 content = append_date(content)
-                break  # else statement won't trigger
+                break
             except FileNotFoundError:
-                continue
-                # print(f"{file_path} can't be found!")
-                # self.db.set_state(job_id, "invalid")
-                # return
+                print(f"{file_path} can't be found!")
+                self.db.set_state(job_id, "invalid")
+                return
             except Exception:
                 continue
         else:

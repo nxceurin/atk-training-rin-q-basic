@@ -17,7 +17,7 @@ templates = Jinja2Templates(directory=script_path + "/templates")
 
 
 @app.get("/", response_class=HTMLResponse)
-async def get_form():
+async def get_form() -> str:
     """
     Generates the HTML-basedd form where user can enter configuration file path, producer and consumer names, and have
     the option to start/end producer, consumer, manager and cleaner.
@@ -51,11 +51,11 @@ async def get_form():
 
 @app.post("/")
 async def execute_command(conf_path: str = fastapi.Form(...), action: str = fastapi.Form(...),
-                          p_name: str = fastapi.Form(...), c_name: str = fastapi.Form(...)) -> str:
+                          p_name: str = fastapi.Form(...), c_name: str = fastapi.Form(...)):
     """
-        Function responsible for executing pm2 commands.
-        Input is received from the submitted form and returns a string.
-        """
+    Function responsible for executing pm2 commands.
+    Input is received from the submitted form and returns a string.
+    """
     global config_path
     global script_path
     config_path = conf_path

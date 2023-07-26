@@ -11,9 +11,9 @@ from rin_db_exc.process_tasks import coalesce_spaces, stair_case, append_date
 class Consumer(PersistentQInterface):
     def __init__(self, name: str, cpath: str, tries: int = 3):
         super().__init__()
-        self.name = name
-        self.config = cpath
-        self.max_tries = tries
+        self.name: str = name
+        self.config: str = cpath
+        self.max_tries: int = tries
         self.db = PersistentQSQLite(cpath)
 
     def __call__(self):
@@ -43,30 +43,26 @@ class Consumer(PersistentQInterface):
                 content = append_date(content)
                 break  # else statement won't trigger
             except FileNotFoundError:
-                print(f"{file_path} can't be found!")
-                self.db.set_invalid(job_id)
-                return
+                continue
+                # print(f"{file_path} can't be found!")
+                # self.db.set_state(job_id, "invalid")
+                # return
             except Exception:
                 continue
         else:
             print(f"Can't process after {self.max_tries} tries. Skipping...")
-            self.db.set_invalid(job_id)
+            self.db.set_state(job_id, "invalid")
             return
 
         with open(file_path + '.processed', 'w') as write_file:
             write_file.write(content)
         print(f"[{self.name}] - {dt.now()} - [{curr_job}]")
 
-    def delete_entry(self, job_id: int):
-        self.db.delete_entry(job_id)
-
     def get_job_name(self):
         return self.db.get_job_details()
 
     def set_invalid(self, job_id: int):
-        self.db.set_invalid(job_id)
+        self.db.set_state(job_id, "invalid")
 
     def set_completed(self, job_id: int):
-        self.db.conn.execute("BEGIN IMMEDIATE")
-        self.db.conn.execute("UPDATE queue SET state='processed' WHERE id= ? AND state='processing'", (job_id,))
-        self.db.conn.commit()
+        self.db.set_state(job_id, "processed")

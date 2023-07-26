@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import datetime as dt
-from typing import Union, Tuple, List
+from typing import Union, Tuple
 
 
 class PersistentQSQLite:
@@ -47,19 +47,12 @@ class PersistentQSQLite:
         self.conn.commit()
         return None
 
-    def delete_entry(self, job_id: int):
+    def set_state(self, job_id: int, state: str):
         self.conn.execute("BEGIN IMMEDIATE")
-        self.conn.execute('DELETE FROM queue WHERE id = ?', (job_id,))
-        self.conn.commit()
-
-    def get_jobs(self) -> List:
-        cursor = self.conn.execute('SELECT id, filename, state FROM queue')
-        row = cursor.fetchall()
-        return row
-
-    def set_invalid(self, job_id: int):
-        self.conn.execute("BEGIN IMMEDIATE")
-        self.conn.execute("UPDATE queue SET state='invalid' WHERE id= ?", (job_id,))
+        if state == "processed":
+            self.conn.execute("UPDATE queue SET state=? WHERE id= ? AND state='processing'", (state, job_id,))
+        else:
+            self.conn.execute("UPDATE queue SET state=? WHERE id= ?", (state, job_id,))
         self.conn.commit()
 
     def get_job_details(self):

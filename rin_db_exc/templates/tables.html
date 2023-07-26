@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tables Page</title>
+</head>
+
+<body>
+<h1>Unprocessed Jobs</h1>
+<table>
+    <thead>
+    <tr>
+        <th>Job ID</th>
+        <th>Job Name</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in unprocessed_jobs %}
+    <tr>
+        <td>{{ row.id }}</td>
+        <td>{{ row.filename }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h1>Finished Jobs</h1>
+<table>
+    <thead>
+    <tr>
+        <th>Job ID</th>
+        <th>Job Name</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in finished_jobs %}
+    <tr>
+        <td>{{ row.id }}</td>
+        <td>{{ row.filename }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h1>Invalid Jobs</h1>
+<table>
+    <thead>
+    <tr>
+        <th>Job ID</th>
+        <th>Job Name</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in invalid_jobs %}
+    <tr>
+        <td>{{ row.id }}</td>
+        <td>{{ row.filename }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>

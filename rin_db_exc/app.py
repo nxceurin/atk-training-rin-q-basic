@@ -4,7 +4,7 @@ import subprocess
 import fastapi
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from rin_db_exc.classes.PersistentQSQLite import PersistentQSQLite as psql
@@ -43,6 +43,8 @@ async def get_form():
             <button type="submit" name="action" value="no_man">Stop Manager</button><br>
             <button type="submit" name="action" value="yes_cln">Start Cleaner</button>
             <button type="submit" name="action" value="no_cln">Stop Cleaner</button>
+            <br><br>
+            <button type="submit" name="action" value="tables">View jobs</button>
         </form>
         """
 
@@ -66,10 +68,14 @@ async def execute_command(conf_path: str = fastapi.Form(...), action: str = fast
         "yes_man": f"pm2 start {script_path}/scripts/manager_pm2.py -- {conf_path}",
         "yes_cln": f"pm2 start {script_path}/scripts/cleaner_pm2.py -- {conf_path}",
         "no_man": f"pm2 stop {script_path}/scripts/manager_pm2.py",
-        "no_cln": f"pm2 stop {script_path}/scripts/cleaner_pm2.py"
+        "no_cln": f"pm2 stop {script_path}/scripts/cleaner_pm2.py",
+        "tables": "redir tables"
     }
     command = map_button.get(action, "invalid")
-    if command == "invalid":
+    if command == "redir tables":
+        return RedirectResponse("/tables", status_code=303)
+
+    elif command == "invalid":
         return "Invalid action!"
 
     try:

@@ -26,8 +26,8 @@ def consume():
     logger: logging.Logger = logging.getLogger(__name__)
     signal.signal(signal.SIGALRM, timeout_handler)
 
-    cpath: list = sys.argv[1:]  # get args from terminal/ used with pm2
-    conf_dict = get_yaml(cpath[0])  # get the first arg- path to config.yaml
+    cpath: list = sys.argv[1:]  # get args from command/ used with pm2
+    conf_dict = get_yaml(cpath[0])
 
     # get values from config file
     fpath: str = conf_dict.get('general', {"primary_path": os.getcwd()}).get('primary_path', os.getcwd())
@@ -38,7 +38,7 @@ def consume():
         cons = Consumer(cpath=fpath, name=cpath[1], tries=num_tries)
         for _ in range(3):  # if queue is empty for 60seconds, stop itself
             try:
-                job_name, job_id = cons.get_job_name()  # redundant ??
+                job_name, job_id = cons.get_job_name()  # checks if unprocessed jobs exist in queue
                 break
             except TypeError:
                 print("Queue empty. Waiting 20s...")
@@ -47,7 +47,7 @@ def consume():
             except sqlite3.OperationalError:
                 print("Waiting for lock to be released...")
                 sleep(5)
-        else:  # executes if for loop hasn't been broken -> queue is empty over 60s
+        else:
             subprocess.run(f"pm2 stop {cpath[1]}", shell=True, check=True)
 
         try:
@@ -57,14 +57,14 @@ def consume():
         except TimeoutException:
             logger.error(f"Job took too long. Skipping {job_name}...")
             try:
-                cons.set_invalid(job_id)
+                cons.set_state(job_id, "invalid")
                 break
             except Exception:
                 pass
 
         while True:  # keep trying till processed job is marked completed
             try:
-                cons.set_completed(job_id)
+                cons.set_state(job_id, "processed")
                 break
             except sqlite3.OperationalError:
                 print("Lock detected. Trying till lock is removed...")

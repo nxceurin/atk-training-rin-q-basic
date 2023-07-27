@@ -20,13 +20,10 @@ class Consumer(PersistentQInterface):
         for _ in range(5):
             try:
                 curr_job, job_id = self.db.get_job_details()
-                # if not curr_job:
-                #     print("Queue empty. Exiting...")
-                #     return
-                self.db.set_state(job_id, "processing", "unprocessed")
+                self.db.set_state(job_id, "processing", "unprocessed")  # this doesn't add timestap YET
                 break
-            except sqlite3.OperationalError:
-                print("Database locked. Trying again in 2s.")
+            except sqlite3.OperationalError as se:
+                print(f"{se}")
                 sleep(2)
                 continue
         else:
@@ -61,8 +58,5 @@ class Consumer(PersistentQInterface):
     def get_job_name(self):
         return self.db.get_job_details()
 
-    def set_invalid(self, job_id: int):
-        self.db.set_state(job_id, "invalid")
-
-    def set_completed(self, job_id: int):
-        self.db.set_state(job_id, "processed")
+    def set_state(self, job_id: int, state: str):
+        self.db.set_state(job_id, state)

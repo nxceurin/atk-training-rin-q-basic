@@ -1,6 +1,5 @@
 import sqlite3
 from datetime import datetime as dt
-from typing import Union, Tuple
 
 
 class PersistentQSQLite:
@@ -22,37 +21,21 @@ class PersistentQSQLite:
         state TEXT NOT NULL, proc_time TEXT)''')
         self.conn.commit()
 
-    def add_file_to_queue(self, filename: str) -> None:
+    def add_job_to_queue(self, filename: str) -> None:
         """
         Inserts a row into the database, specifically containing columns filename, state and proc_time
         """
         self.conn.execute("BEGIN TRANSACTION")
         self.conn.execute('INSERT INTO queue (filename, state, proc_time) VALUES (?, ?, ?)',
                           (filename, "unprocessed", str(dt.now())))
-        self.conn.execute("COMMIT")
-
-    # this can be eliminated ??
-    def get_next_file_from_queue(self) -> Union[None, Tuple[str, int]]:
-        """
-        get the top-most file from the queue with the status unprocessed and sets it to "processing"
-        """
-        self.conn.execute("BEGIN TRANSACTION")
-        cursor = self.conn.execute('SELECT id, filename, state FROM queue WHERE state = "unprocessed" LIMIT 1')
-        row = cursor.fetchone()
-        if row:
-            self.conn.execute("UPDATE queue SET state='processing', proc_time=? WHERE ROWID=?",
-                              (str(dt.now()), row["id"],))
-            file_id, filename, _ = row
-            self.conn.execute("COMMIT")
-            return filename, file_id
         self.conn.commit()
-        return None
 
     def set_state(self, job_id: int, to_state: str, from_state: str = "processing") -> None:
         self.conn.execute("BEGIN TRANSACTION")
-        self.conn.execute("UPDATE queue SET state=? WHERE id= ? AND state= ?'", (to_state, job_id, from_state))
-        self.conn.execute("COMMIT")
-        # self.conn.commit()
+        curr_time: str = str(dt.now())
+        self.conn.execute("UPDATE queue SET state=?, proc_time=? WHERE id= ? AND state= ?",
+                          (to_state, curr_time, job_id, from_state))
+        self.conn.commit()
 
     def get_job_details(self):
         cursor = self.conn.execute('SELECT id, filename, state FROM queue WHERE state = "unprocessed" LIMIT 1')

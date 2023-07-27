@@ -18,9 +18,10 @@ class Producer(PersistentQInterface):
         fname = ''.join(random.choice(string.ascii_lowercase) for _ in range(10))
         for _ in range(6):
             try:
-                self.db.add_file_to_queue(fname)
+                self.db.add_job_to_queue(fname)
                 break
-            except sqlite3.OperationalError:
+            except sqlite3.OperationalError as se:
+                print(se)
                 sleep(10)
                 continue
         else:
